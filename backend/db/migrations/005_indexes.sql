@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_vouchers_employee_status ON vouchers (employee_id, status);
+CREATE INDEX IF NOT EXISTS idx_vouchers_status          ON vouchers (status);
+CREATE INDEX IF NOT EXISTS idx_vouchers_expense_date    ON vouchers (expense_date);
+CREATE INDEX IF NOT EXISTS idx_vouchers_voucher_date    ON vouchers (voucher_date);
+CREATE INDEX IF NOT EXISTS idx_vouchers_department      ON vouchers (department_name);
+CREATE INDEX IF NOT EXISTS idx_vouchers_category        ON vouchers (expense_category);
+CREATE INDEX IF NOT EXISTS idx_vouchers_amount          ON vouchers (amount);
+CREATE INDEX IF NOT EXISTS idx_vouchers_updated_at      ON vouchers (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_history_created          ON voucher_status_history (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_history_voucher          ON voucher_status_history (voucher_id);

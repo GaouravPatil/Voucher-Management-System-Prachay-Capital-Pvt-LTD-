@@ -1,0 +1,46 @@
+CREATE TABLE IF NOT EXISTS vouchers (
+  id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  voucher_number          VARCHAR(30)  NOT NULL UNIQUE,
+  voucher_date            DATE         NOT NULL DEFAULT CURRENT_DATE,
+  expense_date            DATE         NOT NULL,
+  department_name         VARCHAR(100) NOT NULL,
+  expense_title           VARCHAR(150) NOT NULL,
+  expense_category        VARCHAR(60)  NOT NULL DEFAULT 'Miscellaneous',
+  expense_description     TEXT,
+  amount                  NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+
+  employee_id             UUID NOT NULL REFERENCES users(id),
+  employee_name           VARCHAR(120) NOT NULL,
+  employee_code           VARCHAR(50),
+  employee_signature_path VARCHAR(255),
+
+  status                  voucher_status NOT NULL DEFAULT 'DRAFT',
+  submitted_at            TIMESTAMPTZ,
+
+  director_id             UUID REFERENCES users(id),
+  director_name           VARCHAR(120),
+  director_signature_path VARCHAR(255),
+  approval_date           TIMESTAMPTZ,
+  rejection_reason        TEXT,
+  rejected_at             TIMESTAMPTZ,
+
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_title_not_blank   CHECK (length(btrim(expense_title)) > 0),
+  CONSTRAINT chk_dept_not_blank    CHECK (length(btrim(department_name)) > 0),
+  CONSTRAINT chk_emp_sig_when_submitted
+    CHECK (status = 'DRAFT' OR employee_signature_path IS NOT NULL),
+  CONSTRAINT chk_dir_sig_when_approved
+    CHECK (status <> 'APPROVED' OR (director_signature_path IS NOT NULL AND approval_date IS NOT NULL AND director_id IS NOT NULL)),
+  CONSTRAINT chk_reason_when_rejected
+    CHECK (status <> 'REJECTED' OR (rejection_reason IS NOT NULL AND length(btrim(rejection_reason)) > 0 AND rejected_at IS NOT NULL))
+);
+
+CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_vouchers_updated ON vouchers;
+CREATE TRIGGER trg_vouchers_updated BEFORE UPDATE ON vouchers FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+DROP TRIGGER IF EXISTS trg_users_updated ON users;
+CREATE TRIGGER trg_users_updated BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION set_updated_at();

@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
+
+::selection {
+  @apply bg-blue-100 text-blue-900;
+}
+
+/* Page-enter animation for routed content */
+.page-enter {
+  animation: fade-up 0.35s ease-out both;
+}
+
+/* Subtle link + row transitions */
+a {
+  @apply transition-colors duration-150;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

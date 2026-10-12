@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (typecheck, test, build, migrate)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: evms
+          POSTGRES_PASSWORD: evms_password
+          POSTGRES_DB: evms
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U evms -d evms"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: expense-voucher-system/backend
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://evms:evms_password@localhost:5432/evms
+      JWT_SECRET: ci-test-secret-that-is-at-least-32-chars-long
+      JWT_EXPIRES_IN: 8h
+      BCRYPT_ROUNDS: 4
+      CORS_ORIGIN: http://localhost:5173
+      UPLOAD_DIR: ./uploads
+      MAX_UPLOAD_MB: 2
+      APP_TIMEZONE: Asia/Kolkata
+      REVIEWERS_SEE_DRAFTS: false
+      LOGIN_RATE_LIMIT_MAX: 100
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: expense-voucher-system/backend/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint (non-blocking — eslint not yet pinned in devDeps)
+        run: npm run lint || echo "lint skipped/failed (non-blocking)"
+        continue-on-error: true
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Migrate (smoke test against service DB)
+        run: npm run migrate
+
+  frontend:
+    name: Frontend (typecheck, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expense-voucher-system/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: expense-voucher-system/frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint (non-blocking — eslint not yet pinned in devDeps)
+        run: npm run lint || echo "lint skipped/failed (non-blocking)"
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build

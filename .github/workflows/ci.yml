@@ -25,7 +25,7 @@ jobs:
           --health-retries 5
     defaults:
       run:
-        working-directory: expense-voucher-system/backend
+        working-directory: backend
     env:
       NODE_ENV: test
       DATABASE_URL: postgresql://evms:evms_password@localhost:5432/evms
@@ -50,10 +50,6 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Lint (non-blocking — eslint not yet pinned in devDeps)
-        run: npm run lint || echo "lint skipped/failed (non-blocking)"
-        continue-on-error: true
-
       - name: Unit tests
         run: npm test
 
@@ -68,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: expense-voucher-system/frontend
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
@@ -80,10 +76,6 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Lint (non-blocking — eslint not yet pinned in devDeps)
-        run: npm run lint || echo "lint skipped/failed (non-blocking)"
-        continue-on-error: true
 
       - name: Build
         run: npm run build
